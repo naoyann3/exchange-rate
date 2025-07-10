@@ -129,20 +129,22 @@ async def on_message(message):
     if modified:
         print("Debug: Dollar amounts replaced", flush=True)
 
-    def replace_cme(match):
-        nonlocal modified
-        amount_str = match.group(1)
-        print(f"Debug: Found CME amount: {amount_str}", flush=True)
-        try:
-            amount_float = float(amount_str)
-            result = int(amount_float * rate)
-            amount_formatted = "{:,}".format(int(amount_float))
-            result_formatted = "{:,}".format(result)
-            modified = True
-            return f"CME窓 黄丸{result_formatted}円\n{amount_formatted}ドル"
-        except ValueError as e:
-            print(f"Debug: Invalid amount {amount_str}: {e}", flush=True)
-            return match.group(0)
+cme_pattern = r"CME窓[　\s]+黄丸(\d{3,})(?:\s*ドル)?"  # 修正：3桁以上、ドルは任意
+
+def replace_cme(match):
+    nonlocal modified
+    amount_str = match.group(1)
+    print(f"Debug: Found CME amount: {amount_str}", flush=True)
+    try:
+        amount_float = float(amount_str)
+        result = int(amount_float * rate)
+        amount_formatted = "{:,}".format(int(amount_float))
+        result_formatted = "{:,}".format(result)
+        modified = True
+        return f"CME窓 黄丸{result_formatted}円\n{amount_formatted}ドル"
+    except ValueError as e:
+        print(f"Debug: Invalid amount {amount_str}: {e}", flush=True)
+        return match.group(0)
 
     new_content = re.sub(cme_pattern, replace_cme, new_content)
 
