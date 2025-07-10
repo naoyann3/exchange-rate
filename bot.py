@@ -5,12 +5,14 @@ from discord.ext import commands
 import re
 import os
 import json
+from datetime import datetime
 
 # Flask設定（ヘルスチェック用）
 app = Flask(__name__)
 
 @app.route('/health')
 def health():
+    print(f"Debug: Health check requested: {datetime.now()}", flush=True)
     return 'OK', 200
 
 # Discordボット設定
@@ -45,6 +47,7 @@ def save_processed_message_ids(message_ids):
 
 async def notify_error(error_message, error_type="unknown"):
     channel = bot.get_channel(OPERATIONS_CHANNEL_ID)
+    print(f"Debug: Operations channel: {channel}", flush=True)
     if channel:
         tech_message = (
             f"【為替ボット：技術的お知らせ】\n"
@@ -53,6 +56,8 @@ async def notify_error(error_message, error_type="unknown"):
             f"ボットはデフォルトレート（1ドル=150円）で動作中です。運営にて対応中。"
         )
         await channel.send(tech_message)
+    else:
+        print(f"Debug: Operations channel not found: {OPERATIONS_CHANNEL_ID}", flush=True)
     print(f"Debug: Error details: {error_message}", flush=True)
 
 def get_user_rate(content):
@@ -88,7 +93,7 @@ async def on_message(message):
 
     content = message.content
     dollar_pattern = r"(\d+)ドル|\$(\d+(?:,\d{3})*(?:\.\d+)?)"  # $100,000対応
-    cme_pattern = r"CME窓[　\s]+黄丸(\d+)(?![ドル])"
+    cme_pattern = r"CME窓[　\s]+黄丸(\d{3,})(?:\s*ドル)?"  # 3桁以上、ドルは任意
 
     print(f"Debug: Processing message in channel {message.channel.id} ({message.channel.name}), ID: {message.id}", flush=True)
     print(f"Debug: Received message: {content[:100]}...", flush=True)
@@ -129,22 +134,20 @@ async def on_message(message):
     if modified:
         print("Debug: Dollar amounts replaced", flush=True)
 
-cme_pattern = r"CME窓[　\s]+黄丸(\d{3,})(?:\s*ドル)?"  # 修正：3桁以上、ドルは任意
-
-def replace_cme(match):
-    nonlocal modified
-    amount_str = match.group(1)
-    print(f"Debug: Found CME amount: {amount_str}", flush=True)
-    try:
-        amount_float = float(amount_str)
-        result = int(amount_float * rate)
-        amount_formatted = "{:,}".format(int(amount_float))
-        result_formatted = "{:,}".format(result)
-        modified = True
-        return f"CME窓 黄丸{result_formatted}円\n{amount_formatted}ドル"
-    except ValueError as e:
-        print(f"Debug: Invalid amount {amount_str}: {e}", flush=True)
-        return match.group(0)
+    def replace_cme(match):
+        nonlocal modified
+        amount_str = match.group(1)
+        print(f"Debug: Found CME amount: {amount_str}", flush=True)
+        try:
+            amount_float = float(amount_str)
+            result = int(amount_float * rate)
+            amount_formatted = "{:,}".format(int(amount_float))
+            result_formatted = "{:,}".format(result)
+            modified = True
+            return f"CME窓 黄丸{result_formatted}円\n{amount_formatted}ドル"
+        except ValueError as e:
+            print(f"Debug: Invalid amount {amount_str}: {e}", flush=True)
+            return match.group(0)
 
     new_content = re.sub(cme_pattern, replace_cme, new_content)
 
