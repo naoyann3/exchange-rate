@@ -141,7 +141,7 @@ async def on_message(message):
             result_formatted = "{:,}".format(result)
             modified = True
             print(f"Debug: Converted CME amount {amount_str} to {result_formatted}円", flush=True)
-            return f"CME窓 黄丸{result_formatted}円\n{amount_formatted}ドル"
+            return f"CME窓 黄丸{result_formatted}円\n{{PROTECTED_{amount_str}}}"
         except ValueError as e:
             print(f"Debug: Invalid CME amount {amount_str}: {e}", flush=True)
             return match.group(0)
@@ -157,6 +157,9 @@ async def on_message(message):
     new_content = re.sub(dollar_pattern, replace_dollar, new_content)
     if modified:
         print("Debug: Dollar amounts replaced", flush=True)
+
+    # プレースホルダーを復元
+    new_content = re.sub(r"\{\{PROTECTED_(\d+)\}\}", r"\1ドル", new_content)
 
     if not modified:
         print("Debug: No modifications made, skipping send", flush=True)
