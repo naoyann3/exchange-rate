@@ -20,11 +20,11 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # 許可チャンネル
 ALLOWED_CHANNEL_IDS = [
-    1392835671722426469,  # 為替ボットテストチャンネル
+    1392837025354219571,  # 為替ボットテストチャンネル
 ]
 
 # 為替ボットテストチャンネル（技術的フィードバック用）
-OPERATIONS_CHANNEL_ID = 1392835671722426469
+OPERATIONS_CHANNEL_ID = 1392837025354219571
 
 PROCESSED_MESSAGE_IDS_FILE = "processed_message_ids.json"
 PROCESSED_MESSAGE_IDS = set()
