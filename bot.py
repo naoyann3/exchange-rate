@@ -55,7 +55,11 @@ async def notify_error(error_message, error_type="unknown"):
             f"詳細：{error_message}\n"
             f"ボットはデフォルトレート（1ドル=150円）で動作中です。運営にて対応中。"
         )
-        await channel.send(tech_message)
+        try:
+            await channel.send(tech_message)
+            print(f"Debug: Error notification sent to channel {OPERATIONS_CHANNEL_ID}", flush=True)
+        except Exception as e:
+            print(f"Debug: Failed to send error notification: {e}", flush=True)
     else:
         print(f"Debug: Operations channel not found: {OPERATIONS_CHANNEL_ID}", flush=True)
     print(f"Debug: Error details: {error_message}", flush=True)
@@ -160,8 +164,8 @@ async def on_message(message):
             print("Debug: Dollar amounts replaced", flush=True)
     except Exception as e:
         print(f"Debug: Error in dollar pattern processing: {e}", flush=True)
-        bot.loop.create_task(notify_error(f"Error in dollar pattern processing: {e}", error_type="regex_error"))
-        return
+        await notify_error(f"Error in dollar pattern processing: {e}", error_type="regex_error")
+        print("Debug: Continuing after dollar pattern error", flush=True)
 
     # CMEプレースホルダーを復元
     new_content = re.sub(r"{CME_PROTECTED_(\d+)}", lambda m: f"{int(m.group(1)):,}ドル", new_content)
