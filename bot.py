@@ -1,8 +1,17 @@
+from flask import Flask
+import threading
 import discord
 from discord.ext import commands
 import re
 import os
 import json
+
+# Flask設定（ヘルスチェック用）
+app = Flask(__name__)
+
+@app.route('/health')
+def health():
+    return 'OK', 200
 
 # Discordボット設定
 intents = discord.Intents.default()
@@ -154,4 +163,7 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-bot.run(os.getenv("YOUR_BOT_TOKEN"))
+if __name__ == '__main__':
+    # Flaskを別スレッドで実行
+    threading.Thread(target=lambda: app.run(host='0.0.0.0', port=int(os.getenv('PORT', 8080)))).start()
+    bot.run(os.getenv("YOUR_BOT_TOKEN"))
