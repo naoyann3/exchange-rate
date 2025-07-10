@@ -92,7 +92,7 @@ async def on_message(message):
         return
 
     content = message.content
-    dollar_pattern = r"(?<!CME窓[\s　]*黄丸[\s　]*\d+\n)(\d+)ドル|\$(\d+(?:,\d{3})*(?:\.\d+)?)"
+    dollar_pattern = r"(?<!{CME_PROTECTED_\d+})(\d+)ドル|\$(\d+(?:,\d{3})*(?:\.\d+)?)"
     cme_pattern = r"CME窓(?:[\s　]*黄丸)?[\s　]*(\d{3,})(?:\s*ドル)?"
 
     print(f"Debug: Processing message in channel {message.channel.id} ({message.channel.name}), ID: {message.id}", flush=True)
@@ -141,7 +141,7 @@ async def on_message(message):
             result_formatted = "{:,}".format(result)
             modified = True
             print(f"Debug: Converted CME amount {amount_str} to {result_formatted}円", flush=True)
-            return f"CME窓 黄丸{result_formatted}円\n{amount_formatted}ドル"
+            return f"CME窓 黄丸{result_formatted}円\n{{CME_PROTECTED_{amount_str}}}"
         except ValueError as e:
             print(f"Debug: Invalid CME amount {amount_str}: {e}", flush=True)
             return match.group(0)
@@ -157,6 +157,9 @@ async def on_message(message):
     new_content = re.sub(dollar_pattern, replace_dollar, new_content)
     if modified:
         print("Debug: Dollar amounts replaced", flush=True)
+
+    # CMEプレースホルダーを復元
+    new_content = re.sub(r"{CME_PROTECTED_(\d+)}", lambda m: f"{int(m.group(1)):,}ドル", new_content)
 
     if not modified:
         print("Debug: No modifications made, skipping send", flush=True)
