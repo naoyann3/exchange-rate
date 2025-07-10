@@ -148,6 +148,7 @@ async def on_message(message):
             return f"CME窓 黄丸{result_formatted}円\n{{CME_PROTECTED_{amount_str}}}"
         except ValueError as e:
             print(f"Debug: Invalid CME amount {amount_str}: {e}", flush=True)
+            modified = False
             return match.group(0)
 
     # CME変換を先に行う
