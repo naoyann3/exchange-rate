@@ -93,7 +93,7 @@ async def on_message(message):
 
     content = message.content
     dollar_pattern = r"(\d+)ドル|\$(\d+(?:,\d{3})*(?:\.\d+)?)"  # $100,000対応
-    cme_pattern = r"CME窓[\s　]*黄丸[\s　]*(\d{3,})(?:\s*ドル)?"  # 全角スペース対応
+    cme_pattern = r"CME窓(?:[\s　]*黄丸)?[\s　]*(\d{3,})(?:\s*ドル)?"  # 黄丸オプション
 
     print(f"Debug: Processing message in channel {message.channel.id} ({message.channel.name}), ID: {message.id}", flush=True)
     print(f"Debug: Received message: {content[:100]}...", flush=True)
@@ -130,18 +130,6 @@ async def on_message(message):
             print(f"Debug: Invalid amount {amount_str}: {e}", flush=True)
             return match.group(0)
 
-    # CME変換を先に行う
-    cme_matches = re.findall(cme_pattern, new_content)
-    print(f"Debug: CME matches found: {cme_matches}", flush=True)
-    new_content = re.sub(cme_pattern, replace_cme, new_content)
-    if modified:
-        print("Debug: CME amounts replaced", flush=True)
-
-    # その後にドル変換
-    new_content = re.sub(dollar_pattern, replace_dollar, new_content)
-    if modified:
-        print("Debug: Dollar amounts replaced", flush=True)
-
     def replace_cme(match):
         nonlocal modified
         amount_str = match.group(1)
@@ -157,6 +145,18 @@ async def on_message(message):
         except ValueError as e:
             print(f"Debug: Invalid CME amount {amount_str}: {e}", flush=True)
             return match.group(0)
+
+    # CME変換を先に行う
+    cme_matches = re.findall(cme_pattern, new_content)
+    print(f"Debug: CME matches found: {cme_matches}", flush=True)
+    new_content = re.sub(cme_pattern, replace_cme, new_content)
+    if modified:
+        print("Debug: CME amounts replaced", flush=True)
+
+    # その後にドル変換
+    new_content = re.sub(dollar_pattern, replace_dollar, new_content)
+    if modified:
+        print("Debug: Dollar amounts replaced", flush=True)
 
     if not modified:
         print("Debug: No modifications made, skipping send", flush=True)
