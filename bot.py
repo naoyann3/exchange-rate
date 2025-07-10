@@ -92,8 +92,8 @@ async def on_message(message):
         return
 
     content = message.content
-    dollar_pattern = r"(\d+)ドル|\$(\d+(?:,\d{3})*(?:\.\d+)?)"  # $100,000対応
-    cme_pattern = r"CME窓(?:[\s　]*黄丸)?[\s　]*(\d{3,})(?:\s*ドル)?"  # 黄丸オプション
+    dollar_pattern = r"(?<!CME窓[\s　]*黄丸[\s　]*\d+\n)(\d+)ドル|\$(\d+(?:,\d{3})*(?:\.\d+)?)"
+    cme_pattern = r"CME窓(?:[\s　]*黄丸)?[\s　]*(\d{3,})(?:\s*ドル)?"
 
     print(f"Debug: Processing message in channel {message.channel.id} ({message.channel.name}), ID: {message.id}", flush=True)
     print(f"Debug: Received message: {content[:100]}...", flush=True)
