@@ -159,7 +159,9 @@ async def on_message(message):
         print("Debug: Dollar amounts replaced", flush=True)
 
     # プレースホルダーを復元
-    new_content = re.sub(r"\{\{PROTECTED_(\d+)\}\}", r"\1ドル", new_content)
+    print(f"Debug: Restoring placeholders in content: {new_content[:100]}...", flush=True)
+    new_content = re.sub(r"\{PROTECTED_(\d+)\}", r"\1ドル", new_content)
+    print(f"Debug: Restored content: {new_content[:100]}...", flush=True)
 
     if not modified:
         print("Debug: No modifications made, skipping send", flush=True)
