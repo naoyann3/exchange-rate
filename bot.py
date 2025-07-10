@@ -93,7 +93,7 @@ async def on_message(message):
 
     content = message.content
     dollar_pattern = r"(\d+)ドル|\$(\d+(?:,\d{3})*(?:\.\d+)?)"  # $100,000対応
-    cme_pattern = r"CME窓[　\s]+黄丸(\d{3,})(?:\s*ドル)?"  # 3桁以上、ドルは任意
+    cme_pattern = r"CME窓\s*黄丸\s*(\d{3,})(?:\s*ドル)?"  # スペースを任意に
 
     print(f"Debug: Processing message in channel {message.channel.id} ({message.channel.name}), ID: {message.id}", flush=True)
     print(f"Debug: Received message: {content[:100]}...", flush=True)
@@ -133,6 +133,10 @@ async def on_message(message):
     new_content = re.sub(dollar_pattern, replace_dollar, new_content)
     if modified:
         print("Debug: Dollar amounts replaced", flush=True)
+
+    # CMEマッチのデバッグ
+    cme_matches = re.findall(cme_pattern, new_content)
+    print(f"Debug: CME matches found: {cme_matches}", flush=True)
 
     def replace_cme(match):
         nonlocal modified
