@@ -137,16 +137,17 @@ async def on_message(message):
     def replace_cme(match):
         nonlocal modified
         amount_str = match.group(1)
-        print(f"Debug: Found CME amount: {amount_str}", flush=True)
+        print(f"Debug: Found CME amount: {amount_str} in pattern match", flush=True)
         try:
             amount_float = float(amount_str)
             result = int(amount_float * rate)
             amount_formatted = "{:,}".format(int(amount_float))
             result_formatted = "{:,}".format(result)
             modified = True
+            print(f"Debug: Converted CME amount {amount_str} to {result_formatted}円", flush=True)
             return f"CME窓 黄丸{result_formatted}円\n{amount_formatted}ドル"
         except ValueError as e:
-            print(f"Debug: Invalid amount {amount_str}: {e}", flush=True)
+            print(f"Debug: Invalid CME amount {amount_str}: {e}", flush=True)
             return match.group(0)
 
     new_content = re.sub(cme_pattern, replace_cme, new_content)
