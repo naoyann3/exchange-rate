@@ -55,11 +55,7 @@ async def notify_error(error_message, error_type="unknown"):
             f"詳細：{error_message}\n"
             f"ボットはデフォルトレート（1ドル=150円）で動作中です。運営にて対応中。"
         )
-        try:
-            await channel.send(tech_message)
-            print(f"Debug: Error notification sent to channel {OPERATIONS_CHANNEL_ID}", flush=True)
-        except Exception as e:
-            print(f"Debug: Failed to send error notification: {e}", flush=True)
+        await channel.send(tech_message)
     else:
         print(f"Debug: Operations channel not found: {OPERATIONS_CHANNEL_ID}", flush=True)
     print(f"Debug: Error details: {error_message}", flush=True)
@@ -96,8 +92,8 @@ async def on_message(message):
         return
 
     content = message.content
-    dollar_pattern = r"(?<!{CME_PROTECTED_\d+})(\d+)ドル|\$(\d+(?:,\d{3})*(?:\.\d+)?)"
-    cme_pattern = r"CME窓(?:[\s　]*黄丸)?[\s　]*(\d{3,})(?:\s*ドル)?"
+    dollar_pattern = r"(\d+)ドル|\$(\d+(?:,\d{3})*(?:\.\d+)?)"  # $100,000対応
+    cme_pattern = r"CME窓\s*黄丸\s*(\d{3,})(?:\s*ドル)?"  # スペースを任意に
 
     print(f"Debug: Processing message in channel {message.channel.id} ({message.channel.name}), ID: {message.id}", flush=True)
     print(f"Debug: Received message: {content[:100]}...", flush=True)
@@ -134,6 +130,14 @@ async def on_message(message):
             print(f"Debug: Invalid amount {amount_str}: {e}", flush=True)
             return match.group(0)
 
+    new_content = re.sub(dollar_pattern, replace_dollar, new_content)
+    if modified:
+        print("Debug: Dollar amounts replaced", flush=True)
+
+    # CMEマッチのデバッグ
+    cme_matches = re.findall(cme_pattern, new_content)
+    print(f"Debug: CME matches found: {cme_matches}", flush=True)
+
     def replace_cme(match):
         nonlocal modified
         amount_str = match.group(1)
@@ -145,32 +149,12 @@ async def on_message(message):
             result_formatted = "{:,}".format(result)
             modified = True
             print(f"Debug: Converted CME amount {amount_str} to {result_formatted}円", flush=True)
-            return f"CME窓 黄丸{result_formatted}円\n{{CME_PROTECTED_{amount_str}}}"
+            return f"CME窓 黄丸{result_formatted}円\n{amount_formatted}ドル"
         except ValueError as e:
             print(f"Debug: Invalid CME amount {amount_str}: {e}", flush=True)
-            modified = False
             return match.group(0)
 
-    # CME変換を先に行う
-    cme_matches = re.findall(cme_pattern, new_content)
-    print(f"Debug: CME matches found: {cme_matches}", flush=True)
     new_content = re.sub(cme_pattern, replace_cme, new_content)
-    if modified:
-        print("Debug: CME amounts replaced", flush=True)
-
-    # その後にドル変換
-    try:
-        new_content = re.sub(dollar_pattern, replace_dollar, new_content)
-        if modified:
-            print("Debug: Dollar amounts replaced", flush=True)
-    except Exception as e:
-        print(f"Debug: Error in dollar pattern processing: {e}", flush=True)
-        await notify_error(f"Error in dollar pattern processing: {e}", error_type="regex_error")
-        print("Debug: Continuing after dollar pattern error", flush=True)
-
-    # CMEプレースホルダーを復元
-    new_content = re.sub(r"{CME_PROTECTED_(\d+)}", lambda m: f"{int(m.group(1)):,}ドル", new_content)
-    print("Debug: CME placeholders restored", flush=True)
 
     if not modified:
         print("Debug: No modifications made, skipping send", flush=True)
