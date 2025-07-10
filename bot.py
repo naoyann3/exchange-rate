@@ -154,12 +154,18 @@ async def on_message(message):
         print("Debug: CME amounts replaced", flush=True)
 
     # その後にドル変換
-    new_content = re.sub(dollar_pattern, replace_dollar, new_content)
-    if modified:
-        print("Debug: Dollar amounts replaced", flush=True)
+    try:
+        new_content = re.sub(dollar_pattern, replace_dollar, new_content)
+        if modified:
+            print("Debug: Dollar amounts replaced", flush=True)
+    except Exception as e:
+        print(f"Debug: Error in dollar pattern processing: {e}", flush=True)
+        bot.loop.create_task(notify_error(f"Error in dollar pattern processing: {e}", error_type="regex_error"))
+        return
 
     # CMEプレースホルダーを復元
     new_content = re.sub(r"{CME_PROTECTED_(\d+)}", lambda m: f"{int(m.group(1)):,}ドル", new_content)
+    print("Debug: CME placeholders restored", flush=True)
 
     if not modified:
         print("Debug: No modifications made, skipping send", flush=True)
