@@ -168,7 +168,21 @@ async def on_message(message):
 
     final_content = new_content
     print(f"Debug: Sending message in channel {message.channel.id} ({message.channel.name}): {final_content[:100]}...", flush=True)
-    await message.channel.send(final_content)
+     # ---------------------------------------------------------
+    # 修正箇所: 送信時のエラーハンドリングを追加
+    # ---------------------------------------------------------
+    try:
+        await message.channel.send(final_content)
+    except discord.errors.HTTPException as e:
+        # API制限やブロック(429)などのHTTPエラーをキャッチ
+        if e.status == 429:
+            print(f"Debug: [ALERT] Discord API Rate Limit/Blocked (429). Failed to send message. Error: {e}", flush=True)
+        else:
+            print(f"Debug: Failed to send message (HTTP {e.status}). Error: {e}", flush=True)
+    except Exception as e:
+        # その他の予期せぬエラー
+        print(f"Debug: Unexpected error sending message: {e}", flush=True)
+    # ---------------------------------------------------------
 
     await bot.process_commands(message)
 
